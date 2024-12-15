@@ -7,19 +7,31 @@ const app = express();
 app.use(cors());
 
 const server = http.createServer(app);
-const io = require('socket.io')(server, {
+const io = new Server(server, {
   cors: {
-      origin: 'https://gamezone-avan.netlify.app',
-      methods: ['GET', 'POST']
-  }
+    origin: 'https://gamezone-avan.netlify.app',
+    methods: ['GET', 'POST'],
+  },
 });
-app.use(cors({ origin: 'https://gamezone-avan.netlify.app' }));
-const games = {}; // Store game data by room ID
 
-io.on('connection',(socket) => {
+const games = {}; // Store game data by room ID
+const disconnectedPlayers = {}; // Track disconnected players with a timeout
+
+io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
   socket.on('join', () => {
+    // Check if the player is reconnecting
+    for (const [gameId, playerId] of Object.entries(disconnectedPlayers)) {
+      if (playerId === socket.id) {
+        clearTimeout(disconnectedPlayers[gameId].timeout);
+        delete disconnectedPlayers[gameId];
+        socket.join(gameId);
+        console.log(`Player ${socket.id} rejoined game ${gameId}`);
+        return;
+      }
+    }
+
     // Find an available game room or create a new one
     let gameId = null;
     for (const [id, game] of Object.entries(games)) {
@@ -59,35 +71,67 @@ io.on('connection',(socket) => {
 
   socket.on('move', ({ gameId, board, symbol }) => {
     const game = games[gameId];
-    if (game && game.currentTurn === symbol) {
-      game.board = board;
-      game.currentTurn = symbol === 'X' ? 'O' : 'X';
-
-      // Broadcast the move to the other player
-      socket.to(gameId).emit('move', { board, symbol });
+    if (!game) {
+      socket.emit('error', 'Game not found.');
+      return;
     }
+
+    if (game.currentTurn !== symbol) {
+      socket.emit('error', 'Not your turn.');
+      return;
+    }
+
+    // Validate the move
+    const isValidMove = board.every(
+      (cell, idx) => cell === game.board[idx] || (game.board[idx] === null && cell !== null)
+    );
+    if (!isValidMove) {
+      socket.emit('error', 'Invalid move.');
+      return;
+    }
+
+    game.board = board;
+    game.currentTurn = symbol === 'X' ? 'O' : 'X';
+
+    // Broadcast the move to the other player
+    socket.to(gameId).emit('move', { board, symbol });
   });
 
   socket.on('reset', ({ gameId }) => {
     const game = games[gameId];
-    if (game) {
-      game.board = Array(9).fill(null);
-      game.currentTurn = 'X';
-      io.to(gameId).emit('reset');
+    if (!game) {
+      socket.emit('error', 'Game not found.');
+      return;
     }
+
+    game.board = Array(9).fill(null);
+    game.currentTurn = 'X';
+    io.to(gameId).emit('reset');
+    console.log(`Game ${gameId} has been reset.`);
   });
 
   socket.on('disconnect', () => {
     console.log('A user disconnected:', socket.id);
 
-    // Find and clean up the game the player was in
+    // Find the game the player was in
     for (const [gameId, game] of Object.entries(games)) {
       if (game.players.includes(socket.id)) {
         game.players = game.players.filter((id) => id !== socket.id);
+
         if (game.players.length === 0) {
           delete games[gameId]; // Delete the game if no players are left
+          console.log(`Game ${gameId} deleted.`);
         } else {
-          // Notify the remaining player
+          // Notify the remaining player and give a chance for the disconnected player to reconnect
+          disconnectedPlayers[gameId] = {
+            playerId: socket.id,
+            timeout: setTimeout(() => {
+              console.log(`Player ${socket.id} did not reconnect. Removing from game ${gameId}.`);
+              delete games[gameId];
+              delete disconnectedPlayers[gameId];
+            }, 30000), // Timeout for 30 seconds
+          };
+
           io.to(gameId).emit('opponentDisconnected', 'Your opponent disconnected.');
         }
         break;
