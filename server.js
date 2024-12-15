@@ -7,13 +7,13 @@ const app = express();
 app.use(cors());
 
 const server = http.createServer(app);
-const io = new Server(server, {
+const io = require('socket.io')(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-  },
+      origin: 'https://gamezone-avan.netlify.app',
+      methods: ['GET', 'POST']
+  }
 });
-
+app.use(cors({ origin: 'https://gamezone-avan.netlify.app' }));
 const games = {}; // Store game data by room ID
 
 io.on('connection',(socket) => {
