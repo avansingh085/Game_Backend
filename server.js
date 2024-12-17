@@ -32,7 +32,7 @@ io.on('connection', (socket) => {
       }
     }
 
-    // Find an available game room or create a new one
+    
     let gameId = null;
     for (const [id, game] of Object.entries(games)) {
       if (game.players.length < 2) {
@@ -42,7 +42,7 @@ io.on('connection', (socket) => {
     }
 
     if (!gameId) {
-      // Create a new game
+     
       gameId = `game_${socket.id}`;
       games[gameId] = {
         players: [],
@@ -58,10 +58,10 @@ io.on('connection', (socket) => {
     socket.join(gameId);
     console.log(`Player ${socket.id} joined game ${gameId} as ${playerSymbol}`);
 
-    // Notify the player of their symbol and game ID
+    
     socket.emit('startGame', { symbol: playerSymbol, gameId });
 
-    // If the game now has two players, notify them to start
+   
     if (game.players.length === 2) {
       io.to(gameId).emit('readyToPlay', {
         message: 'Game ready. Start playing!',
