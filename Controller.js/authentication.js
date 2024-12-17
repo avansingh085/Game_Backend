@@ -3,6 +3,21 @@ const jwt=require('jsonwebtoken');
 const generateToken=async (_id)=>{
   return jwt.sign({id},JWT_SECRET,{ expiresIn: '30m' });
 }
+const verifyToken=async (req,res,next)=>{
+    try{
+           let {token}=req.body;
+           if(!token)
+           {
+            return res.status(401).send({success:false,result:"token is valid"});
+           }
+           const decoded=await jwt.verify(token,JWT_SECRET);
+           req._id=decoded;
+           next();
+    }
+    catch(err){
+        return res.status(401).send({success:false,result:"internal server error"});
+    }
+}
 const register=async (req,res)=>{
     try{
        const {username,email,password}=req.body;
@@ -44,4 +59,4 @@ const login=async (req,res)=>{
           return res.status(500).send({sucess:false,result:"internal server error"});
    }
 }
-module.exports={login,register};
+module.exports={login,register,verifyToken};
