@@ -7,7 +7,7 @@ const fs=require('fs');
 const database=require('./Schema/database.js')
 database();
 const app = express();
-
+const {login,register,verifyToken}=require('./Controller/authentication.js')
 app.use(cors());
 const options = {
     key: fs.readFileSync('server-key.pem'),
@@ -23,9 +23,9 @@ const io = new Server( httpsServer, {
     cors: { origin: "*" },
 });
 const op=require('./Controller/authentication.js');
-// app.post("/register",register)
-// app.post("/login",login);
-// app.get("/verifyToken",verifyToken);
+app.post("/register",register)
+app.post("/login",login);
+app.get("/verifyToken",verifyToken);
 const games = {};
 const playerTimers = {}; 
 io.on("connection", (socket) => {

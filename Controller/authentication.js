@@ -24,6 +24,7 @@ const verifyToken = async (req, res, next) => {
 const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
+    console.log(req.body);
     if (!username || !email || !password) {
       return res.status(401).send({ success: false, result: "Invalid email or password" });
     }
