@@ -14,10 +14,7 @@ const options = {
     cert: fs.readFileSync('server-cert.pem')
   };
   
-  const httpsServer = https.createServer(options, (req, res) => {
-    res.writeHead(200);
-    res.end();
-  });
+  const httpsServer = https.createServer(options, app);
 
 const io = new Server( httpsServer, {
     cors: { origin: "*" },
