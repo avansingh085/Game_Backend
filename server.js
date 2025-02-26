@@ -1,25 +1,21 @@
 const express = require("express");
 const { Server } = require("socket.io");
-const https = require("https");
+const http = require("http");
 const cors = require("cors");
-const { v4: uuidv4 } = require("uuid");
 const fs=require('fs');
-const database=require('./Schema/database.js')
-database();
+const { v4: uuidv4 } = require("uuid");
+const {login,register,verifyToken}=require('./Controller/authentication');
 const app = express();
-const {login,register,verifyToken}=require('./Controller/authentication.js')
 app.use(cors());
 const options = {
-    key: fs.readFileSync('server-key.pem'),
-    cert: fs.readFileSync('server-cert.pem')
-  };
-  
-  const httpsServer = https.createServer(options, app);
+    key: fs.readFileSync("server-key.pem"),
+    cert: fs.readFileSync("server-cert.pem"),
+};
 
-const io = new Server( httpsServer, {
+const server = http.createServer(options,app);
+const io = new Server(server, {
     cors: { origin: "*" },
 });
-const op=require('./Controller/authentication.js');
 app.post("/register",register)
 app.post("/login",login);
 app.get("/verifyToken",verifyToken);
@@ -119,6 +115,6 @@ console.log(games)
     }
 });
 
-httpsServer.listen(3001, () => {
+server.listen(3001, () => {
     console.log("Server is running on port 3001");
 });

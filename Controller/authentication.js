@@ -43,7 +43,9 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
+  console.log("OPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
   try {
+    
     let { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).send({ success: false, result: "Please fill all required details" });
