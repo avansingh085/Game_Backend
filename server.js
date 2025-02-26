@@ -1,145 +1,127 @@
-const express = require('express');
-const http = require('http');
-const cors = require('cors');
-const { Server } = require('socket.io');
-
+const express = require("express");
+const { Server } = require("socket.io");
+const https = require("https");
+const cors = require("cors");
+const { v4: uuidv4 } = require("uuid");
+const fs=require('fs');
+const database=require('./Schema/database.js')
+database();
 const app = express();
+
 app.use(cors());
+const options = {
+    key: fs.readFileSync('server-key.pem'),
+    cert: fs.readFileSync('server-cert.pem')
+  };
+  
+  const httpsServer = https.createServer(options, (req, res) => {
+    res.writeHead(200);
+    res.end();
+  });
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: 'https://gamezone-avan.netlify.app',
-    methods: ['GET', 'POST'],
-  },
+const io = new Server( httpsServer, {
+    cors: { origin: "*" },
 });
+const op=require('./Controller/authentication.js');
+// app.post("/register",register)
+// app.post("/login",login);
+// app.get("/verifyToken",verifyToken);
+const games = {};
+const playerTimers = {}; 
+io.on("connection", (socket) => {
+    console.log(`User connected: ${socket.id}`);
+    socket.on("join", ({ board }) => {
+        const gameType = socket.handshake.query.gameType;
+        let gameId = null;
+        let playerSymbol = null;
 
-const games = {}; // Store game data by room ID
-const disconnectedPlayers = {}; // Track disconnected players with a timeout
-
-io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
-
-  socket.on('join', () => {
-    // Check if the player is reconnecting
-    for (const [gameId, playerId] of Object.entries(disconnectedPlayers)) {
-      if (playerId === socket.id) {
-        clearTimeout(disconnectedPlayers[gameId].timeout);
-        delete disconnectedPlayers[gameId];
-        socket.join(gameId);
-        console.log(`Player ${socket.id} rejoined game ${gameId}`);
-        return;
-      }
-    }
-
-    
-    let gameId = null;
-    for (const [id, game] of Object.entries(games)) {
-      if (game.players.length < 2) {
-        gameId = id;
-        break;
-      }
-    }
-
-    if (!gameId) {
-     
-      gameId = `game_${socket.id}`;
-      games[gameId] = {
-        players: [],
-        board: Array(9).fill(null),
-        currentTurn: 'X',
-      };
-    }
-
-    const game = games[gameId];
-    game.players.push(socket.id);
-    const playerSymbol = game.players.length === 1 ? 'X' : 'O';
-
-    socket.join(gameId);
-    console.log(`Player ${socket.id} joined game ${gameId} as ${playerSymbol}`);
-
-    
-    socket.emit('startGame', { symbol: playerSymbol, gameId });
-
-   
-    if (game.players.length === 2) {
-      io.to(gameId).emit('readyToPlay', {
-        message: 'Game ready. Start playing!',
-      });
-    }
-  });
-
-  socket.on('move', ({ gameId, board, symbol }) => {
-    const game = games[gameId];
-    if (!game) {
-      socket.emit('error', 'Game not found.');
-      return;
-    }
-
-    if (game.currentTurn !== symbol) {
-      socket.emit('error', 'Not your turn.');
-      return;
-    }
-
-    // Validate the move
-    const isValidMove = board.every(
-      (cell, idx) => cell === game.board[idx] || (game.board[idx] === null && cell !== null)
-    );
-    if (!isValidMove) {
-      socket.emit('error', 'Invalid move.');
-      return;
-    }
-
-    game.board = board;
-    game.currentTurn = symbol === 'X' ? 'O' : 'X';
-
-    // Broadcast the move to the other player
-    socket.to(gameId).emit('move', { board, symbol });
-  });
-
-  socket.on('reset', ({ gameId }) => {
-    const game = games[gameId];
-    if (!game) {
-      socket.emit('error', 'Game not found.');
-      return;
-    }
-
-    game.board = Array(9).fill(null);
-    game.currentTurn = 'X';
-    io.to(gameId).emit('reset');
-    console.log(`Game ${gameId} has been reset.`);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('A user disconnected:', socket.id);
-
-    // Find the game the player was in
-    for (const [gameId, game] of Object.entries(games)) {
-      if (game.players.includes(socket.id)) {
-        game.players = game.players.filter((id) => id !== socket.id);
-
-        if (game.players.length === 0) {
-          delete games[gameId]; // Delete the game if no players are left
-          console.log(`Game ${gameId} deleted.`);
-        } else {
-          // Notify the remaining player and give a chance for the disconnected player to reconnect
-          disconnectedPlayers[gameId] = {
-            playerId: socket.id,
-            timeout: setTimeout(() => {
-              console.log(`Player ${socket.id} did not reconnect. Removing from game ${gameId}.`);
-              delete games[gameId];
-              delete disconnectedPlayers[gameId];
-            }, 30000), // Timeout for 30 seconds
-          };
-
-          io.to(gameId).emit('opponentDisconnected', 'Your opponent disconnected.');
+        for (const [id, game] of Object.entries(games)) {
+            if (!game.players.O && game.gameType === gameType) {
+             
+                gameId = id;
+                playerSymbol =(gameType==="TIC" ? 'X': 'b');
+                game.players.O = { socketId: socket.id, userId: socket.handshake.query.id };
+                break;
+            }
         }
-        break;
+
+        if (!gameId) {
+            gameId = `game_${uuidv4()}`;
+            games[gameId] = {
+                players: { X: { socketId: socket.id, userId: socket.handshake.query.id }, O: null },
+                board,
+                gameId,
+                currentTurn: (gameType==="TIC" ? 'X': 'b'),
+                gameType,
+            };
+            playerSymbol = (gameType==="TIC" ? 'X': 'b');
+        }
+
+        socket.join(gameId);
+        console.log(`Player ${socket.id} joined game ${gameId} as ${playerSymbol}`);
+
+        if (games[gameId].players.X && games[gameId].players.O) {
+            io.to(gameId).emit("startGame", { gameId, ...games[gameId] });
+            startTurnTimer(gameId);
+        } else {
+            socket.emit("waiting", "Waiting for an opponent...");
+        }
+    });
+
+    socket.on("move", ({ gameId, board, symbol }) => {
+        console.log(board)
+      try{
+        
+        const game = games[gameId];
+        // if (!game) return socket.emit("error", "Game not found.");
+        // if (game.currentTurn !== symbol) return socket.emit("error", "Not your turn.");
+        game.board = board;
+        if(game.gameType==="TIC")
+        game.currentTurn = symbol === "X" ? "O" : "X";
+        else
+        game.currentTurn=symbol ;
+        io.to(gameId).emit("move", { board, symbol });
+        resetTurnTimer(gameId);
+      }catch(err){
+        console.log("erorr during move");
       }
+    });
+
+    socket.on("reset", ({ gameId, board }) => {
+        if (!games[gameId]) return;
+        games[gameId].board = board;
+        games[gameId].currentTurn = "X";
+        io.to(gameId).emit("reset");
+    });
+console.log(games)
+    socket.on("disconnect", () => {
+        console.log(`User disconnected: ${socket.id}`);
+        for (const [gameId, game] of Object.entries(games)) {
+            const playerType = Object.keys(game.players).find((key) => game.players[key]?.socketId === socket.id);
+            if (playerType) {
+                io.to(gameId).emit("opponentDisconnected", "Your opponent disconnected.");
+                setTimeout(() => {
+                    delete games[gameId];
+                }, 30000);
+                break;
+            }
+        }
+    });
+
+    function startTurnTimer(gameId) {
+        if (playerTimers[gameId]) clearTimeout(playerTimers[gameId]);
+        playerTimers[gameId] = setTimeout(() => {
+            io.to(gameId).emit("turnTimeout", "A player lost due to timeout.");
+            delete games[gameId];
+        }, 60000);
     }
-  });
+
+    function resetTurnTimer(gameId) {
+        if (playerTimers[gameId]) clearTimeout(playerTimers[gameId]);
+        startTurnTimer(gameId);
+    }
 });
 
-server.listen(3001, () => {
-  console.log('Server is running on port 3001');
+httpsServer.listen(3001, () => {
+    console.log("Server is running on port 3001");
 });

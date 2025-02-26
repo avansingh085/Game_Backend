@@ -1,7 +1,7 @@
 const mongoose=require('mongoose');
 const connectDB=async ()=>{
     try{
-         await mongoose.connect('mongodb://127.0.0.1:27017/GameZone');
+         await mongoose.connect('mongodb+srv://avansingh085:SbhUyHjWETMpJWUN@cluster0.tyyrk.mongodb.net/GameZone');
          console.log("databace connect successfully!");
     }
     catch(err)
