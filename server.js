@@ -4,8 +4,11 @@ const http = require("http");
 const cors = require("cors");
 const fs=require('fs');
 const { v4: uuidv4 } = require("uuid");
+const database=require('./Schema/database');
+database();
 const {login,register,verifyToken}=require('./Controller/authentication');
 const app = express();
+app.use(express.json());  
 app.use(cors());
 const options = {
     key: fs.readFileSync("server-key.pem"),
