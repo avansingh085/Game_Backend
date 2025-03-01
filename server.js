@@ -5,6 +5,7 @@ const cors = require("cors");
 const fs=require('fs');
 const { v4: uuidv4 } = require("uuid");
 const database=require('./Schema/database');
+const Users=require('./Schema/UsersSchema');
 database();
 const {login,register,verifyToken}=require('./Controller/authentication');
 const app = express();
@@ -14,7 +15,6 @@ const options = {
     key: fs.readFileSync("server-key.pem"),
     cert: fs.readFileSync("server-cert.pem"),
 };
-
 const server = http.createServer(options,app);
 const io = new Server(server, {
     cors: { origin: "*" },
@@ -30,17 +30,14 @@ io.on("connection", (socket) => {
         const gameType = socket.handshake.query.gameType;
         let gameId = null;
         let playerSymbol = null;
-
         for (const [id, game] of Object.entries(games)) {
             if (!game.players.O && game.gameType === gameType) {
-             
                 gameId = id;
                 playerSymbol =(gameType==="TIC" ? 'X': 'b');
                 game.players.O = { socketId: socket.id, userId: socket.handshake.query.id };
                 break;
             }
         }
-
         if (!gameId) {
             gameId = `game_${uuidv4()}`;
             games[gameId] = {
@@ -57,13 +54,18 @@ io.on("connection", (socket) => {
         console.log(`Player ${socket.id} joined game ${gameId} as ${playerSymbol}`);
 
         if (games[gameId].players.X && games[gameId].players.O) {
-            io.to(gameId).emit("startGame", { gameId, ...games[gameId] });
+            io.to(gameId).emit("startGame", { gameId,players:games[gameId].players });
             startTurnTimer(gameId);
         } else {
             socket.emit("waiting", "Waiting for an opponent...");
         }
     });
-
+    socket.on("checkMate",({gameId,turn,winner})=>{
+         io.to(gameId).emit("checkMate",{gameId,turn,winner});
+    })
+    socket.on("Draw",({gameId,turn})=>{
+      io.to(gameId).emit("Draw",{gameId,turn});
+    })
     socket.on("move", ({ gameId, board, symbol }) => {
         console.log(board)
       try{

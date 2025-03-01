@@ -19,7 +19,10 @@ const verifyToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     req._id = decoded._id; 
-     return res.send({success:true,result:"correct token"});
+   let user=await Users.findOne({_id:decoded._id});
+   if(!user)
+    return res.status(404).send({success:false,result:"usernot exist thise token"});
+     return res.status(200).send({success:true,result:"correct token",Profile:user});
    // next(); 
   } catch (err) {
     console.error("JWT Verification Error:", err.message);
@@ -42,7 +45,7 @@ const register = async (req, res) => {
     }
     console.log("OP__CROSS")
     let user = await Users.create({ username, password, email });
-    return res.status(200).send({ success: true, token: await generateToken(user._id), result: "Successfully registered",userId:username });
+    return res.status(200).send({ success: true, token: await generateToken(user._id), result: "Successfully registered",userId:username ,Profile:isExistUser});
     
   } catch (err) {
     return res.status(400).send({ success: false, result: "Internal server error" });
@@ -57,14 +60,14 @@ const login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).send({ success: false, result: "Please fill all required details" });
     }
-    //console.log(req.body);
+    
     let user = await Users.findOne({ email });
     if (!user || !(await user.matchPassword(password))) {
      
       return res.status(401).send({ success: false, result: "Invalid email or password" });
     }
   
-    return res.status(200).send({ success: true, result: "Successfully logged in", token: await generateToken(user._id),userId:user.username});
+    return res.status(200).send({ success: true, result: "Successfully logged in", token: await generateToken(user._id),userId:user.username,Profile:user});
     
   } catch (err) {
     return res.status(500).send({ success: false, result: "Internal server error" });
