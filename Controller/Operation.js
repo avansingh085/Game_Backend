@@ -20,7 +20,7 @@ const updateProfile=async (req,res)=>{
 const getLeaderBoard=async (req,res)=>{
     try{
         const users=await User.find().sort({score:-1}).limit(10);
-        return res.status(200).send({success:true,users});
+        return res.status(200).send({success:true,leaderBoard:users});
     }
     catch(err){
         console.log(err);
