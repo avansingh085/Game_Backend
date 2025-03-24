@@ -8,9 +8,10 @@ const database=require('./Schema/database');
 const Users=require('./Schema/UsersSchema');
 database();
 const {login,register,verifyToken}=require('./Controller/authentication');
+const {updateProfile}=require('./Controller/Operation');
 const app = express();
 app.use(express.json());  
-app.use(cors());
+app.use(cors({ origin: "https://gamezone-avan.netlify.app", credentials: true }));
 const options = {
     key: fs.readFileSync("server-key.pem"),
     cert: fs.readFileSync("server-cert.pem"),
@@ -21,6 +22,7 @@ const io = new Server(server, {
 });
 app.post("/register",register)
 app.post("/login",login);
+app.post("/updateProfile",updateProfile);
 app.get("/verifyToken",verifyToken);
 const games = {};
 const playerTimers = {}; 
@@ -106,6 +108,8 @@ console.log(games)
         }
     });
 
+   
+
     function startTurnTimer(gameId) {
         if (playerTimers[gameId]) clearTimeout(playerTimers[gameId]);
         playerTimers[gameId] = setTimeout(() => {
@@ -119,6 +123,7 @@ console.log(games)
         startTurnTimer(gameId);
     }
 });
+
 
 server.listen(3001, () => {
     console.log("Server is running on port 3001");

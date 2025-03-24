@@ -33,9 +33,9 @@ const verifyToken = async (req, res, next) => {
 const register = async (req, res) => {
   console.log("AVAN",req.body);
   try {
-    const { username, email, password } = req.body;
+    const { name, email, password } = req.body;
     console.log(req.body);
-    if (!username || !email || !password) {
+    if (!name || !email || !password) {
       return res.status(401).send({ success: false, result: "Invalid email or password" });
     }
     
@@ -44,8 +44,8 @@ const register = async (req, res) => {
       return res.status(500).send({ success: false, result: "User already exists" });
     }
     console.log("OP__CROSS")
-    let user = await Users.create({ username, password, email });
-    return res.status(200).send({ success: true, token: await generateToken(user._id), result: "Successfully registered",userId:username ,Profile:isExistUser});
+    let user = await Users.create({ name, password, email });
+    return res.status(200).send({ success: true, token: await generateToken(user._id), result: "Successfully registered",userId:name ,Profile:isExistUser});
     
   } catch (err) {
     return res.status(400).send({ success: false, result: "Internal server error" });
