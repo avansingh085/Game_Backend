@@ -17,7 +17,16 @@ const updateProfile=async (req,res)=>{
        return res.status(500).send({success:false,msg:"Internal Server Error"});
     }
 }
-
-module.exports={updateProfile};
+const getLeaderBoard=async (req,res)=>{
+    try{
+        const users=await User.find().sort({score:-1}).limit(10);
+        return res.status(200).send({success:true,users});
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).send({success:false,msg:"Internal Server Error"});
+    }
+}
+module.exports={updateProfile,getLeaderBoard};
 
         

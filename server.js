@@ -8,7 +8,7 @@ const database=require('./Schema/database');
 const Users=require('./Schema/UsersSchema');
 database();
 const {login,register,verifyToken}=require('./Controller/authentication');
-const {updateProfile}=require('./Controller/Operation');
+const {updateProfile,getLeaderBoard}=require('./Controller/Operation');
 const app = express();
 app.use(express.json());  
 app.use(cors({ origin: "*"}));
@@ -21,6 +21,7 @@ const io = new Server(server, {
     cors: { origin: "*" },
 });
 app.post("/register",register);
+app.get("/getLeaderBoard",getLeaderBoard);
 app.post("/login",login);
 app.post("/updateProfile",updateProfile);
 app.get("/verifyToken",verifyToken);
