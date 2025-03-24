@@ -10,7 +10,7 @@ const verifyToken = async (req, res, next) => {
   console.log(req.headers)
   try {
   
-    let token = req.headers.authorization; 
+    let token = req.headers.authorization||req.query?.token; 
   
     if (!token) {
       return res.status(401).json({ success: false, result: "Token is missing" });
