@@ -11,14 +11,14 @@ const {login,register,verifyToken}=require('./Controller/authentication');
 const {updateProfile}=require('./Controller/Operation');
 const app = express();
 app.use(express.json());  
-app.use(cors({ origin: "https://gamezone-avan.netlify.app", credentials: true }));
+app.use(cors({ origin: "*"}));
 const options = {
     key: fs.readFileSync("server-key.pem"),
     cert: fs.readFileSync("server-cert.pem"),
 };
 const server = http.createServer(options,app);
 const io = new Server(server, {
-    cors: { origin: "https://gamezone-avan.netlify.app" },
+    cors: { origin: "*" },
 });
 app.post("/register",register);
 app.post("/login",login);
