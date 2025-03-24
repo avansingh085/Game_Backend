@@ -18,9 +18,9 @@ const options = {
 };
 const server = http.createServer(options,app);
 const io = new Server(server, {
-    cors: { origin: "*" },
+    cors: { origin: "https://gamezone-avan.netlify.app" },
 });
-app.post("/register",register)
+app.post("/register",register);
 app.post("/login",login);
 app.post("/updateProfile",updateProfile);
 app.get("/verifyToken",verifyToken);
