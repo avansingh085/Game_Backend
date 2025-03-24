@@ -10,11 +10,11 @@ const updateProfile=async (req,res)=>{
         user.name=name;
         user.imageUrl=imageUrl;
         await user.save();
-       res.status(200).json({user});
+      return res.status(200).send({success:true,user});
     }
     catch(err){
         console.log(err);
-        res.status(500).json({msg:"Internal Server Error"});
+       return res.status(500).send({success:false,msg:"Internal Server Error"});
     }
 }
 
