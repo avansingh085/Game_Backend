@@ -3,7 +3,7 @@ const bcrypt=require('bcryptjs');
 const userSchema=new mongoose.Schema({
     name:{type:String},
     score:{type:Number,default:0},
-    imageUrl:{type:String,default:""},
+    imageUrl:{type:String,default:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzCW8ayM9K_iNzX81NSjgpGcl30jDvsTSiIg&s"},
     email:{type:String,unique:true,required:true},
     password:{type:String,required:true},
 });
