@@ -21,7 +21,7 @@ const io = new Server(server, {
     cors: { origin: "*" },
 });
 app.post("/register",register);
-app.get("/getLeaderBoard",getLeaderBoard);
+app.get("/getLeaderboard",getLeaderBoard);
 app.post("/login",login);
 app.post("/updateProfile",updateProfile);
 app.get("/verifyToken",verifyToken);
