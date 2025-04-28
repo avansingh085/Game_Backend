@@ -13,7 +13,7 @@ const updateProfile=async (req,res)=>{
       return res.status(200).send({success:true,user});
     }
     catch(err){
-        console.log(err);
+        console.log(err,"error during update profile");
        return res.status(500).send({success:false,msg:"Internal Server Error"});
     }
 }
@@ -23,7 +23,7 @@ const getLeaderBoard=async (req,res)=>{
         return res.status(200).send({success:true,leaderboard:users});
     }
     catch(err){
-        console.log(err);
+        console.log(err,"error during get leader board");
         return res.status(500).send({success:false,msg:"Internal Server Error"});
     }
 }

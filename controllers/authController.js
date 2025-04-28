@@ -31,10 +31,10 @@ const verifyToken = async (req, res, next) => {
 };
 
 const register = async (req, res) => {
-  console.log("AVAN",req.body);
+ 
   try {
     const { name, email, password } = req.body;
-    console.log(req.body);
+   
     if (!name || !email || !password) {
       return res.status(401).send({ success: false, result: "Invalid email or password" });
     }
@@ -43,17 +43,18 @@ const register = async (req, res) => {
     if (isExistUser) {
       return res.status(500).send({ success: false, result: "User already exists" });
     }
-    console.log("OP__CROSS")
+   
     let user = await Users.create({ name, password, email });
     return res.status(200).send({ success: true, token: await generateToken(user._id), result: "Successfully registered",userId:name ,Profile:isExistUser});
     
   } catch (err) {
+    console.log(err,"error during register user");
     return res.status(400).send({ success: false, result: "Internal server error" });
   }
 };
 
 const login = async (req, res) => {
-  console.log("OPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
+  
   try {
     
     let { email, password } = req.body;
@@ -70,6 +71,7 @@ const login = async (req, res) => {
     return res.status(200).send({ success: true, result: "Successfully logged in", token: await generateToken(user._id),userId:user.username,Profile:user});
     
   } catch (err) {
+    console.log(err,"error during login")
     return res.status(500).send({ success: false, result: "Internal server error" });
   }
 };
