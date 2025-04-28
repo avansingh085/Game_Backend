@@ -1,5 +1,5 @@
 
-const User=require('../Schema/UsersSchema');
+const User=require('../models/User');
 const updateProfile=async (req,res)=>{
     try{
         const {name,imageUrl,_id}=req.body;
