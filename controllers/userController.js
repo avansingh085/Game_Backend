@@ -27,6 +27,24 @@ const getLeaderBoard=async (req,res)=>{
         return res.status(500).send({success:false,msg:"Internal Server Error"});
     }
 }
-module.exports={updateProfile,getLeaderBoard};
+const updateScore=async (req,res)=>{
+      try{
+        const {id,score}=req.body;
+        const user=await User.findOne({id});
+        if(!user)
+            return res.status(400).send({success:false,message:"invalid user id"});
+        user.score+=parseInt(score);
+        await user.save();
+        return res.status(200).send({success:true,message:"successfully update score"});
+
+
+      }
+      catch(err)
+      {
+         console.log(err,"error generate during score update");
+         return res.status(500).send({success:false,message:"error generate during score update",err});
+      }
+}
+module.exports={updateProfile,getLeaderBoard,updateScore};
 
         
