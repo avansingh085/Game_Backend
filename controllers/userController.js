@@ -40,10 +40,13 @@ const updateScore = async (req, res) => {
         if (!user)
             return res.status(400).send({ success: false, message: "invalid user id" });
         user.score += parseInt(score);
-        console.log("score is update")
+        let sc=user.score;
+        user.progress.push({point:sc});
+        console.log("score is update",user)
         await user.save();
         return res.status(200).send({ success: true, message: "successfully update score" ,User:user});
 
+    
 
     }
     catch (err) {

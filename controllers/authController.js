@@ -15,11 +15,12 @@ const verifyToken = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({ success: false, result: "Token is missing" });
     }
-
+    
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req._id = decoded._id;
     let user = await Users.findOne({ _id: decoded._id });
+   
     if (!user)
       return res.status(404).send({ success: false, result: "usernot exist thise token" });
     return res.status(200).send({ success: true, result: "correct token", Profile: user });
