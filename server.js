@@ -4,7 +4,8 @@ const { Server } = require('socket.io');
 const app = require('./app');
 const connectDB = require('./config/database');
 const socketManager = require('./socket/socketManager');
-
+const dotenv=require('dotenv');
+dotenv.config();
 connectDB();
 
 const options = {

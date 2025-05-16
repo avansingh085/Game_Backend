@@ -6,7 +6,7 @@ const socketManager = (io) => {
     
     io.on("connection", (socket) => {
         console.log(`User connected: ${socket.id}`);
-        socket.on("join", ({ board }) => {
+        socket.on("join", ({ board ,User}) => {
             const gameType = socket.handshake.query.gameType;
             let gameId = null;
             let playerSymbol = null;
@@ -14,14 +14,14 @@ const socketManager = (io) => {
                 if (!game.players.O && game.gameType === gameType) {
                     gameId = id;
                     playerSymbol =(gameType==="TIC" ? 'X': 'b');
-                    game.players.O = { socketId: socket.id, userId: socket.handshake.query.id };
+                    game.players.O = { socketId: socket.id, userId: socket.handshake.query.id,User };
                     break;
                 }
             }
             if (!gameId) {
                 gameId = `game_${uuidv4()}`;
                 games[gameId] = {
-                    players: { X: { socketId: socket.id, userId: socket.handshake.query.id }, O: null },
+                    players: { X: { socketId: socket.id, userId: socket.handshake.query.id ,User}, O: null },
                     board,
                     gameId,
                     currentTurn: (gameType==="TIC" ? 'X': 'b'),

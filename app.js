@@ -10,5 +10,8 @@ app.use(cors({ origin: '*' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.get('/',(req,res)=>{
+    return res.send("hlloe");
+})
 
 module.exports = app;

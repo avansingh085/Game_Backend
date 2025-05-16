@@ -1,7 +1,9 @@
 const mongoose=require('mongoose');
+const dotenv=require('dotenv');
+dotenv.config();
 const connectDB=async ()=>{
     try{
-         await mongoose.connect('mongodb+srv://avansingh085:SbhUyHjWETMpJWUN@cluster0.tyyrk.mongodb.net/GameZone');
+         await mongoose.connect(process.env.MONGODB_URL);
          console.log("databace connect successfully!");
     }
     catch(err)
