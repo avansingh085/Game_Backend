@@ -55,9 +55,25 @@ const updateScore = async (req, res) => {
     }
 }
 
-const getUserProfile=async (req,res)=>{
-    const userId=req.userId;
-    return await User.findById(userId);
-}
+const getUserProfile = async (req, res) => {
+    try {
+        const userId = req.userId; 
+        const user = await Users.findById(userId).select("-password"); 
+
+        if (!user) {
+            return res.status(404).json({ success: false, result: "User not found" });
+        }
+
+        
+        return res.status(200).json({
+            success: true,
+            result: "Profile fetched successfully",
+            Profile: user
+        });
+    } catch (error) {
+        console.error("Profile Error:", error);
+        return res.status(500).json({ success: false, result: "Internal server error" });
+    }
+};
 module.exports = { updateProfile, getLeaderBoard, updateScore,getUserProfile };
 
