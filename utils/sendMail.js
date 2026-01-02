@@ -1,4 +1,5 @@
 const transport=require('../config/nodemailer');
+
 const sender = {
     address: "gamezone@demomailtrap.co",
     name: "GameZone",
