@@ -1,30 +1,42 @@
-
 const Users = require('../models/User.js');
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-dotenv.config();
-const verifyToken = async (req, res, next) => {
-  console.log(req.headers)
-  try {
 
-    let token = req.headers.authorization || req.query?.token;
+const verifyToken = async (req, res, next) => {
+   
+    const token = req.cookies?.accessToken;
 
     if (!token) {
-      return res.status(401).json({ success: false, result: "Token is missing" });
+        return res.status(401).json({ 
+            success: false, 
+            result: "Authentication required" 
+        });
     }
 
+    try {
+        
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        
+        req.userId = decoded.id; 
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req._id = decoded._id;
-    let user = await Users.findOne({ _id: decoded._id });
-    if (!user)
-      return res.status(404).send({ success: false, result: "usernot exist thise token" });
-    // return res.status(200).send({ success: true, result: "correct token", Profile: user });
+        const userExists = await Users.exists({ _id: decoded.id });
+        if (!userExists) {
+            return res.status(404).json({ success: false, result: "User no longer exists" });
+        }
 
-    next(); 
-  } catch (err) {
-    console.error("JWT Verification Error:", err.message);
-    return res.status(401).json({ success: false, result: "Invalid or expired token" });
-  }
+        next(); 
+    } catch (err) {
+        console.error("JWT Verification Error:", err.message);
+
+        if (err.name === 'TokenExpiredError') {
+            return res.status(403).json({ 
+                success: false, 
+                result: "Token expired",
+                isExpired: true 
+            });
+        }
+
+        return res.status(401).json({ success: false, result: "Invalid token" });
+    }
 };
-module.exports=verifyToken;
+
+module.exports = verifyToken;

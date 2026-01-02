@@ -23,7 +23,8 @@ const userSchema = new mongoose.Schema({
             date: { type: String, default: getCurrentFormattedDate },
             point: { type: Number, required: true }
         }
-    ]
+    ],
+    refreshTokens:[String]
 });
 
 userSchema.methods.matchPassword=async function (enteredPassword){
