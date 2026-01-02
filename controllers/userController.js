@@ -54,5 +54,10 @@ const updateScore = async (req, res) => {
         return res.status(500).send({ success: false, message: "error generate during score update", err });
     }
 }
-module.exports = { updateProfile, getLeaderBoard, updateScore };
+
+const getUserProfile=async (req,res)=>{
+    const userId=req.userId;
+    return await Users.findById(userId);
+}
+module.exports = { updateProfile, getLeaderBoard, updateScore,getUserProfile };
 

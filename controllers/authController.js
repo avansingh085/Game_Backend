@@ -7,30 +7,6 @@ const sendMail = require('../utils/sendMail.js');
 dotenv.config();
 
 
-const verifyToken = async (req, res, next) => {
-  console.log(req.headers)
-  try {
-
-    let token = req.headers.authorization || req.query?.token;
-
-    if (!token) {
-      return res.status(401).json({ success: false, result: "Token is missing" });
-    }
-
-
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRETE);
-    req._id = decoded._id;
-    let user = await Users.findOne({ _id: decoded._id });
-
-    if (!user)
-      return res.status(404).send({ success: false, result: "usernot exist thise token" });
-    return res.status(200).send({ success: true, result: "correct token", Profile: user });
-    // next(); 
-  } catch (err) {
-    console.error("JWT Verification Error:", err.message);
-    return res.status(401).json({ success: false, result: "Invalid or expired token" });
-  }
-};
 
 const register = async (req, res) => {
 
@@ -215,4 +191,4 @@ const changePassword=async (req,res)=>{
     
 }
 
-module.exports = { login, register, verifyToken, handleRefreshToken, sendOtp, verifyOtp,changePassword };
+module.exports = { login, register, handleRefreshToken, sendOtp, verifyOtp,changePassword };
