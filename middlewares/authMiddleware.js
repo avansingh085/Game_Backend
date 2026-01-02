@@ -28,7 +28,7 @@ const verifyToken = async (req, res, next) => {
         console.error("JWT Verification Error:", err.message);
 
         if (err.name === 'TokenExpiredError') {
-            return res.status(403).json({
+            return res.status(401).json({
                 success: false,
                 result: "Token expired",
                 isExpired: true
