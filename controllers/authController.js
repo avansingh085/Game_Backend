@@ -192,4 +192,27 @@ const verifyOtp = async (req, res) => {
   return res.status(400).json({ success: false, message: "failed to verify!" });
 }
 
-module.exports = { login, register, verifyToken, handleRefreshToken, sendOtp, verifyOtp };
+const changePassword=async (req,res)=>{
+    const {newPassword,email,otp}=req.body;
+     const savedOtp = await Otp.findOne({ email });
+     if(String(newPassword).length<8)
+     {
+      return res.status(401).json({success:false,message:"password length must be atleast 8"});
+     }
+      if (savedOtp.otp === otp&&String(newPassword).length>=8)
+      {
+        const user=await Users.findOne({email});
+        user.password=newPassword;
+        await user.save();
+        return res.status(200).json({success:true,message:"Password successfully changed"});
+      }
+      else
+      {
+        return res.status(403).json({success:false,message:"bad request"});
+
+      }
+
+    
+}
+
+module.exports = { login, register, verifyToken, handleRefreshToken, sendOtp, verifyOtp,changePassword };
