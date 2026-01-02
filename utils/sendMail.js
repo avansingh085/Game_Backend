@@ -1,13 +1,20 @@
-const transporter=require('../config/nodemailer');
-const sendMail = async (to, subject, html) => {
+const transport=require('../config/nodemailer');
+const sender = {
+    address: "gamezone@demomailtrap.co",
+    name: "GameZone",
+};
+const sendMail = async (to, subject, text) => {
     try {
-        const info = await transporter.sendMail({
-            from: `"Your App Name" <${process.env.EMAIL_USER}>`,
-            to,
-            subject,
-            html,
-        });
-        console.log("Message sent: %s", info.messageId);
+     const info=  await  transport
+    .sendMail({
+        from: sender,
+        to: to,
+        subject:subject||"",
+        text:text||"",
+        category: "Integration Test",
+    })
+    
+        
         return info;
     } catch (error) {
         console.error("Error sending email:", error);
