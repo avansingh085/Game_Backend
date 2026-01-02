@@ -57,7 +57,7 @@ const updateScore = async (req, res) => {
 
 const getUserProfile=async (req,res)=>{
     const userId=req.userId;
-    return await Users.findById(userId);
+    return await User.findById(userId);
 }
 module.exports = { updateProfile, getLeaderBoard, updateScore,getUserProfile };
 
