@@ -18,7 +18,7 @@ const verifyToken = async (req, res, next) => {
     }
 
 
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRETE);
     req._id = decoded._id;
     let user = await Users.findOne({ _id: decoded._id });
 
@@ -118,7 +118,7 @@ const handleRefreshToken = async (req, res) => {
   const user = await Users.findOne({ refreshTokens: oldRefreshToken });
 
   if (!user) {
-    jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decoded) => {
+    jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRETE, async (err, decoded) => {
       if (err) return;
       const hackedUser = await Users.findById(decoded.id);
       if (hackedUser) {
@@ -132,7 +132,7 @@ const handleRefreshToken = async (req, res) => {
 
   const newRefreshTokenArray = user.refreshTokens.filter(rt => rt !== oldRefreshToken);
 
-  jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decoded) => {
+  jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRETE, async (err, decoded) => {
     if (err) {
 
       user.refreshTokens = [...newRefreshTokenArray];
