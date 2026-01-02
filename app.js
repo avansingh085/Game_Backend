@@ -14,7 +14,7 @@ app.use(cors({ origin: '*' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-app.get('/health',(req,res)=>{
+app.get('/health', (req, res) => {
     return res.send("server health good!");
 })
 
