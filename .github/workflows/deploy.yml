@@ -1,0 +1,41 @@
+name: GAME-BACKEND Deployment
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # Navigate to project directory
+            cd ~/GAME-BACKEND || exit
+            
+            git pull origin main
+            npm install --production
+    
+            if ! command -v pm2 &> /dev/null
+            then
+                echo "PM2 not found, installing..."
+                npm install -g pm2
+            fi
+            pm2 restart game-server || pm2 start server.js --name "game-server"
+            
+            pm2 save
