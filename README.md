@@ -186,47 +186,7 @@ Turn timeout is 60s by default; server deletes games after a timeout event.
 
 ## Screenshots 
 
-Sample screenshots (already included in this repository under `screenshots/`):
 
-### Homepage
-
-![Homepage](screenshots/homepage.png)
-
-_Caption: App landing / home view._
-
-### All games / Lobby
-
-![All Games](screenshots/allgame.png)
-
-_Caption: Game lobby and matchmaking panel._
-
-### Gameplay (Chess)
-
-![Gameplay — Chess](screenshots/chess.png)
-
-_Caption: An in-match gameplay view (example for chess)._
-
-### Leaderboard
-
-![Leaderboard](screenshots/leaderboard.png)
-
-_Caption: Leaderboard — top players by score._
-
-### Profile
-
-![Profile](screenshots/profile.png)
-
-_Caption: User profile and progress history._
-
-### About / Info
-
-![About](screenshots/about.png)
-
-_Caption: About page and app info._
-
-> Tip: For best rendering on GitHub, use PNG/JPEG images around 1200×700 px. To update, replace files in `screenshots/` and commit.
-
----
 
 ## Project structure
 
@@ -244,14 +204,6 @@ _Caption: About page and app info._
 
 ---
 
-## Testing & troubleshooting 
-
-- Emails not arriving: validate `MAILTRAP_TOKEN` and Mailtrap account.
-- HTTPS issues: verify `certs/server-key.pem` and `certs/server-cert.pem` exist and are readable.
-- Cookie/auth issues: check `SameSite` and `Secure` flags on cookies and client `credentials` settings.
-
----
-
 ## Security notes 
 
 - Use strong, unique values for JWT secrets and keep them out of source control.
@@ -259,10 +211,6 @@ _Caption: About page and app info._
 - Rotate refresh tokens and validate cookie scopes.
 
 ---
-
-## Contributing 
-
-Contributions are welcome: fork → feature branch → PR. Please include tests and update docs where relevant.
 
 ---
 
