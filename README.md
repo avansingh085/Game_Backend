@@ -1,203 +1,231 @@
-# Game Backend (GameZone)
+# GameZone — Backend 
 
-**A simple Node.js + Express backend for a multiplayer game with authentication, OTP-based password reset, leaderboards, and Socket.IO real-time game logic.**
+> Modern, secure backend for turn-based multiplayer games built with Node.js, Express, MongoDB and Socket.IO.
 
----
-
-##  Features
-
-- User registration & login (JWT access + refresh tokens in cookies)
-- OTP-based password reset (email via Mailtrap)
-- Leaderboard & user profile management
-- Score update & progress history
-- Real-time multiplayer game with Socket.IO (join, move, reset, checkmate, draw, timeouts)
-- HTTPS-ready (uses certs from `certs/`)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ---
 
-##  Tech stack
+## Table of contents
+
+- [About](#about)
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Quick start](#quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Install](#install)
+  - [Environment](#environment)
+  - [Run](#run)
+- [API reference](#api-reference)
+- [Realtime (Socket.IO)](#realtime-socketio)
+- [Project structure](#project-structure)
+- [Testing & troubleshooting](#testing--troubleshooting)
+- [Security notes](#security-notes)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## About
+
+GameZone backend provides authentication (JWT access + refresh), OTP-based password reset via email, persistent user profiles and leaderboards, plus a Socket.IO-based realtime layer to handle multiplayer game sessions and turn logic.
+
+---
+
+## Features 
+
+- Email OTP for password reset
+- JWT access + refresh tokens stored in cookies (rotated on refresh)
+- Protected endpoints for profile and score updates
+- Leaderboard (top 10) and user progress history
+- Socket.IO matchmaking and game room management (join, move, draw, checkmate, timeouts)
+- HTTPS-capable server with TLS certs
+
+---
+
+## Tech stack 
 
 - Node.js, Express
 - MongoDB (mongoose)
-- Socket.IO
-- JWT for auth
-- Mailtrap (via `mailtrap` transport) for OTP emails
-- Nodemon (dev)
+- Socket.IO for realtime comms
+- JWT for authentication
+- Mailtrap (MailtrapTransport) for dev email delivery
 
 ---
 
-##  Quickstart
+## Quick start
 
 ### Prerequisites
 
-- Node 18+ / npm
-- MongoDB accessible via connection string
-- (Optional) Mailtrap token for sending OTP emails
-- Self-signed or real TLS certs if you want HTTPS (place in `certs/` as `server-key.pem` & `server-cert.pem`)
+- Node.js 18+ and npm
+- MongoDB (Atlas or local)
+- (Optional) Mailtrap token for email testing
+- TLS certificate files (optional for HTTPS)
 
 ### Install
 
+Clone and install dependencies:
+
 ```bash
+git clone <repo-url>
+cd Game-backend
 npm install
 ```
 
-### Environment (.env) — example
+### Environment — `.env` example
 
-Create a `.env` file in project root with the values below:
+Create a `.env` file in the project root. Use `.env.example` as a template.
 
-```
-MONGODB_URL=your_mongodb_connection_string
+```env
+# MongoDB
+MONGODB_URL=mongodb+srv://<user>:<pass>@cluster.mongodb.net/gamezone
+
+# Server
 PORT=3001
-ACCESS_TOKEN_SECRETE=your_access_token_secret
-REFRESH_TOKEN_SECRETE=your_refresh_token_secret
-MAILTRAP_TOKEN=your_mailtrap_token
 
+# JWT secrets (use secure random values)
+ACCESS_TOKEN_SECRETE=your_access_secret
+REFRESH_TOKEN_SECRETE=your_refresh_secret
+
+# Mailtrap (for dev emails)
+MAILTRAP_TOKEN=your_mailtrap_token
 ```
 
-> Note: OTP documents expire after 600 seconds (10 minutes).
+> Tip: keep secrets out of source control. Add `.env` to `.gitignore`.
 
-### Run (development)
+### Run
 
-Start with node or nodemon (dev):
+Development with nodemon:
 
 ```bash
-node server.js
-# or with nodemon
 npx nodemon server.js
 ```
 
-The server will start on `PORT` (default 3001).
+Production (example with PM2):
 
----
-
-##  API Overview
-
-Base URL: `http://localhost:3001/api`
-
-### Authentication routes (`/api/auth`)
-
-- POST `/register`
-  - Body: `{ name, email, password }`
-  - Response: Registers a new user.
-
-- POST `/login`
-  - Body: `{ email, password }`
-  - Response: Sets two cookies (`accessToken` and `jwt`) and returns user info
-
-- POST `/refresh-token`
-  - Uses cookie `jwt` (refresh token). Rotates refresh token and issues new `accessToken` cookie.
-
-- POST `/send-otp`
-  - Body: `{ email }`
-  - Sends OTP to email (Mailtrap configured), stores OTP in DB (expires after 10 minutes)
-
-- POST `/verify-otp`
-  - Body: `{ email, otp }` — verify OTP
-
-- POST `/reset-password`
-  - Body: `{ newPassword, email, otp }` — change password (min length 8)
-
-- GET `/logout`
-  - Clears refresh and access cookies
-
-### User routes (`/api/user`)
-
-- POST `/updateProfile` (protected)
-  - Body: `{ name, image, _id }` — update user name and image
-
-- GET `/getLeaderboard`
-  - Returns top 10 users sorted by score
-
-- POST `/updateScore` (protected)
-  - Body: `{ id, score }` — increments user score and records progress
-
-- GET `/profile` (protected)
-  - Returns currently logged-in user's profile (access token must be present as cookie)
-
-> Protected routes require a valid `accessToken` cookie. The middleware looks for `req.cookies.accessToken`.
-
----
-
-## 🔌 Socket.IO (Realtime) — `socket/socketManager.js`
-
-Important events handled by the server:
-
-- Client connect:
-  - Pass query params in handshake: `gameType` (e.g., `TIC`), and `id` (user id).
-  - Example connect: `io('https://your-server', { query: { gameType: 'TIC', id: userId } })`
-
-- `join` → payload `{ board, User }`
-  - Server pairs players by `gameType`, assigns symbols (X/O or custom), and emits `startGame` when two players are present.
-
-- `move` → payload `{ gameId, board, symbol }`
-  - Server broadcasts `move` to the room and resets per-turn timer.
-
-- `reset` → payload `{ gameId, board }` — resets board and emits `reset`.
-
-- `checkMate` → payload `{ gameId, turn, winner }` — emits `checkMate`.
-
-- `Draw` → payload `{ gameId, turn }` — emits `Draw`.
-
-- `opponentDisconnected` — emitted when a player disconnects.
-
-- `turnTimeout` — emitted when a player loses by timeout (server deletes the game after timeout).
-
-- Turn timer: 60 seconds per turn; server enforces with a timeout and clears on `move`.
-
-### Example client (socket.io-client)
-
-```js
-import { io } from 'socket.io-client';
-const socket = io('https://localhost:3001', { query: { gameType: 'TIC', id: USER_ID } });
-
-socket.emit('join', { board: initialBoard, User: { _id: USER_ID, name: 'Player' } });
-
-socket.on('startGame', data => console.log('Game start', data));
-socket.on('move', data => console.log('Move', data));
+```bash
+npm run start
+# or using pm2
+pm install -g pm2
+pm run start
 ```
 
 ---
 
-##  Testing & Troubleshooting
+## API reference
 
-- If emails don't arrive: ensure `MAILTRAP_TOKEN` is set and valid.
-- If HTTPS fails: verify cert files exist in `certs/server-key.pem` and `certs/server-cert.pem`. You can switch to plain HTTP by using `http.createServer(app)` instead of providing TLS options.
-- Cookies: front-end must use `credentials: 'include'` (fetch) or `withCredentials: true` (axios) to send cookies.
+Base URL: `http://localhost:3001/api`
+
+Authentication
+
+- POST `/api/auth/register` — register user
+  - Body: `{ name, email, password }`
+  - Returns: 200 on success
+
+- POST `/api/auth/login` — login user
+  - Body: `{ email, password }`
+  - On success: sets cookies `accessToken` (httpOnly) and `jwt` (refresh token)
+
+- POST `/api/auth/refresh-token` — rotates refresh tokens, issues a new access token
+
+- POST `/api/auth/send-otp` — send OTP to email
+  - Body: `{ email }`
+
+- POST `/api/auth/verify-otp` — verify OTP
+  - Body: `{ email, otp }`
+
+- POST `/api/auth/reset-password` — reset password
+  - Body: `{ newPassword, email, otp }` (min 8 characters)
+
+- GET `/api/auth/logout` — clear auth cookies
+
+User
+
+- POST `/api/user/updateProfile` — protected
+  - Body: `{ _id, name, image }` — updates profile
+
+- GET `/api/user/getLeaderboard` — returns top 10 users by score
+
+- POST `/api/user/updateScore` — protected
+  - Body: `{ id, score }` — increments user score and logs progress
+
+- GET `/api/user/profile` — protected
+  - Returns: logged-in user's profile (excludes password)
+
+Authentication middleware expects `accessToken` cookie. Ensure client sends cookies using `credentials: 'include'` (fetch) or `withCredentials: true` (axios).
 
 ---
 
-##  Security Notes
+## Realtime (Socket.IO) 
 
-- Use strong secrets for `ACCESS_TOKEN_SECRETE` and `REFRESH_TOKEN_SECRETE`.
-- Use HTTPS in production and set proper cookie flags (HttpOnly, Secure, SameSite) as already done in code.
-- Refresh tokens are stored per-user and rotated on use; expired tokens are purged on rotation failures.
+The Socket server matches players by `gameType` from handshake query and manages game rooms and turn timers.
 
----
+Key events:
 
-##  Project structure (important files)
+- Client connect handshake query: `{ gameType: 'TIC', id: '<userId>' }`
+- `join` — payload `{ board, User }` → server pairs players and emits `startGame` when ready
+- `move` — payload `{ gameId, board, symbol }` → broadcast to room, reset turn timer
+- `reset`, `checkMate`, `Draw` — broadcast accordingly
+- `opponentDisconnected`, `turnTimeout` — notifications fired by server
 
-- `server.js` — entry point
-- `app.js` — Express app, CORS, routes
-- `routes/` — `authRoutes.js`, `userRoutes.js`
-- `controllers/` — controllers for auth & user
-- `models/` — `User.js`, `Otp.js`, `Game.js` (if present)
-- `socket/socketManager.js` — socket logic
-- `config/` — `database.js`, `nodemailer.js`
-- `utils/` — `sendMail.js`, `token.js`
+Example (client):
 
----
+```js
+import { io } from 'socket.io-client';
+const socket = io('https://localhost:3001', {
+  query: { gameType: 'TIC', id: USER_ID }
+});
 
-##  Contributing
+socket.emit('join', { board: initialBoard, User });
+```
 
-- Fork, create a feature branch, write tests, and open a PR.
-- Add or update documentation here as the API evolves.
-
----
-
-##  License
-
-MIT (or add the preferred license)
+Turn timeout is 60s by default; server deletes games after a timeout event.
 
 ---
 
-If you'd like, I can also add example Postman collection snippets or a sample `.env.example` file. 
+## Project structure
+
+```
+/ (root)
+├─ server.js
+├─ app.js
+├─ routes/
+├─ controllers/
+├─ models/
+├─ socket/socketManager.js
+├─ config/
+└─ utils/
+```
+
+---
+
+## Testing & troubleshooting 
+
+- Emails not arriving: validate `MAILTRAP_TOKEN` and Mailtrap account.
+- HTTPS issues: verify `certs/server-key.pem` and `certs/server-cert.pem` exist and are readable.
+- Cookie/auth issues: check `SameSite` and `Secure` flags on cookies and client `credentials` settings.
+
+---
+
+## Security notes 
+
+- Use strong, unique values for JWT secrets and keep them out of source control.
+- Use HTTPS in production.
+- Rotate refresh tokens and validate cookie scopes.
+
+---
+
+## Contributing 
+
+Contributions are welcome: fork → feature branch → PR. Please include tests and update docs where relevant.
+
+---
+
+## License
+
+MIT. See `LICENSE` for details.
+
+---
+
+
